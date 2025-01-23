@@ -33,7 +33,7 @@ namespace ArduinoMAZE
             string port = TB_Port.Text;
 
             string connectionstring = $"server={server};database={database};user={user};password={password};port={port};";
-            Application.Current.MainWindow.Load_Model();
+           // Application.Current.MainWindow.Load_Model();
             //try
             //{
             //    using (MySQLConnection connection = new MySqlConnection(connectionString))
