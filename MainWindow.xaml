@@ -1,0 +1,23 @@
+﻿<Window x:Class="ArduinoMAZE.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ArduinoMAZE"
+        mc:Ignorable="d"
+        Title="A-Mazing MAZE Trainer (c) 2025" Background="LightGray" Height="450" Width="800">
+    <Grid Margin="10">
+
+        <!-- Buttons on the left -->
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="10">
+            <ComboBox x:Name="CB_Options" Width="750" Margin="0,0,0,10"/>
+
+            <Button x:Name="BTN_Start" IsEnabled="False" Content="Start" Width="100" Height="30" Margin="0,0,0,10" HorizontalAlignment="Left" Click="BTN_Start_Click"/>
+            <Button x:Name="BTN_Stop" IsEnabled="False" Content="Stop" Width="100" Height="30" Margin="0,0,0,10" HorizontalAlignment="Left" Click="BTN_Stop_Click"/>
+            <Button x:Name="BTN_Reset" IsEnabled="False" Content="Reset" Width="100" Height="30" Margin="0,0,0,10" HorizontalAlignment="Left" Click="BTN_Reset_Click"/>
+            <Button x:Name="BTN_Load" IsEnabled="True" Content="Load" Width="100" Height="30" Margin="0,0,0,10" HorizontalAlignment="Left" Click="BTN_Load_Click"/>
+        </StackPanel>
+
+        <TextBlock x:Name="TB_Score" Text="Score: 0" FontSize="20" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,20,0,0"/>       
+    </Grid>
+</Window>
