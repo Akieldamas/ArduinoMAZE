@@ -7,17 +7,176 @@
         mc:Ignorable="d"
         Title="A-Mazing MAZE Trainer (c) 2025" Background="LightGray" Height="450" Width="800">
     <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="6*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="5*"/>
+        </Grid.ColumnDefinitions>
 
         <!-- Buttons on the left -->
-        <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="10">
-            <ComboBox x:Name="CB_Options" Width="750" Margin="0,0,0,10"/>
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="10,10,0,10" Grid.ColumnSpan="2" Grid.RowSpan="2">
+            <TextBlock Text="Choisir Mode" FontSize="20"/>
+            <ComboBox x:Name="CB_Options" Width="750" Margin="0,5,0,10"/>
 
-            <Button x:Name="BTN_Start" IsEnabled="False" Content="Start" Width="100" Height="30" Margin="0,0,0,10" HorizontalAlignment="Left" Click="BTN_Start_Click"/>
+            <Button x:Name="BTN_Start" IsEnabled="True" Content="Start" Width="100" Height="30" Margin="0,0,0,10" HorizontalAlignment="Left" Click="BTN_Start_Click"/>
             <Button x:Name="BTN_Stop" IsEnabled="False" Content="Stop" Width="100" Height="30" Margin="0,0,0,10" HorizontalAlignment="Left" Click="BTN_Stop_Click"/>
             <Button x:Name="BTN_Reset" IsEnabled="False" Content="Reset" Width="100" Height="30" Margin="0,0,0,10" HorizontalAlignment="Left" Click="BTN_Reset_Click"/>
             <Button x:Name="BTN_Load" IsEnabled="True" Content="Load" Width="100" Height="30" Margin="0,0,0,10" HorizontalAlignment="Left" Click="BTN_Load_Click"/>
+            <TextBlock x:Name="TB_Score" Text="Score: 0" FontSize="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,0,0,0" Grid.Row="1"/>
         </StackPanel>
 
-        <TextBlock x:Name="TB_Score" Text="Score: 0" FontSize="20" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,20,0,0"/>       
+
+        <Grid x:Name="Grid_Maze" Grid.Row="1" Grid.Column="1"
+      Background="White"
+      HorizontalAlignment="Center"
+      VerticalAlignment="Center"
+      Height="300" Width="300">
+            <!-- Define Rows and Columns for a 5x5 Maze -->
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Walls (Black Squares) -->
+            <!-- Top -->
+            <Rectangle x:Name="Wall00" Grid.Row="0" Grid.Column="0" Fill="Black"/>
+            <Rectangle x:Name="Wall2" Grid.Row="0" Grid.Column="1" Fill="Black"/>
+            <Rectangle x:Name="Wall3" Grid.Row="0" Grid.Column="2" Fill="Black"/>
+            <Rectangle x:Name="Wall4" Grid.Row="0" Grid.Column="3" Fill="Black"/>
+            <Rectangle x:Name="Wall5" Grid.Row="0" Grid.Column="4" Fill="Black"/>
+            <Rectangle x:Name="Wall6" Grid.Row="0" Grid.Column="5" Fill="Black"/>
+            <Rectangle x:Name="Wall7" Grid.Row="0" Grid.Column="6" Fill="Black"/>
+            <Rectangle x:Name="Wall8" Grid.Row="0" Grid.Column="7" Fill="Black"/>
+            <Rectangle x:Name="Wall9" Grid.Row="0" Grid.Column="8" Fill="Black"/>
+            <Rectangle x:Name="Wall10" Grid.Row="0" Grid.Column="9" Fill="Black"/>
+
+            <!-- Bottom -->
+            <Rectangle x:Name="Wall11" Grid.Row="9" Grid.Column="0" Fill="Black"/>
+            <Rectangle x:Name="Wall12" Grid.Row="9" Grid.Column="1" Fill="Black"/>
+            <Rectangle x:Name="Wall13" Grid.Row="9" Grid.Column="2" Fill="Black"/>
+            <Rectangle x:Name="Wall14" Grid.Row="9" Grid.Column="3" Fill="Black"/>
+            <Rectangle x:Name="Wall15" Grid.Row="9" Grid.Column="4" Fill="Black"/>
+            <Rectangle x:Name="Wall16" Grid.Row="9" Grid.Column="5" Fill="Black"/>
+            <Rectangle x:Name="Wall17" Grid.Row="9" Grid.Column="6" Fill="Black"/>
+            <Rectangle x:Name="Wall18" Grid.Row="9" Grid.Column="7" Fill="Black"/>
+            <Rectangle x:Name="Wall19" Grid.Row="9" Grid.Column="8" Fill="Black"/>
+            <Rectangle x:Name="Wall20" Grid.Row="9" Grid.Column="9" Fill="Black"/>
+
+            <!-- Left -->
+            <Rectangle x:Name="Wall21" Grid.Row="1" Grid.Column="0" Fill="Black"/>
+            <Rectangle x:Name="Wall22" Grid.Row="2" Grid.Column="0" Fill="Black"/>
+            <Rectangle x:Name="Wall23" Grid.Row="3" Grid.Column="0" Fill="Black"/>
+            <Rectangle x:Name="Wall24" Grid.Row="4" Grid.Column="0" Fill="Black"/>
+            <Rectangle x:Name="Wall25" Grid.Row="5" Grid.Column="0" Fill="Black"/>
+            <Rectangle x:Name="Wall26" Grid.Row="6" Grid.Column="0" Fill="Black"/>
+            <Rectangle x:Name="Wall27" Grid.Row="7" Grid.Column="0" Fill="Black"/>
+            <Rectangle x:Name="Wall28" Grid.Row="8" Grid.Column="0" Fill="Black"/>
+
+            <!-- Right -->
+            <Rectangle x:Name="Wall29" Grid.Row="1" Grid.Column="9" Fill="Black"/>
+            <Rectangle x:Name="Wall30" Grid.Row="2" Grid.Column="9" Fill="Black"/>
+            <Rectangle x:Name="Wall31" Grid.Row="3" Grid.Column="9" Fill="Black"/>
+            <Rectangle x:Name="Wall32" Grid.Row="4" Grid.Column="9" Fill="Black"/>
+            <Rectangle x:Name="Wall33" Grid.Row="5" Grid.Column="9" Fill="Black"/>
+            <Rectangle x:Name="Wall34" Grid.Row="6" Grid.Column="9" Fill="Black"/>
+            <Rectangle x:Name="Wall35" Grid.Row="7" Grid.Column="9" Fill="Black"/>
+            <Rectangle x:Name="Wall36" Grid.Row="8" Grid.Column="9" Fill="Black"/>
+
+            <!-- Additional Walls (Black Squares) -->
+            <Rectangle x:Name="Wall37" Grid.Row="2" Grid.Column="2" Fill="Black"/>
+            <Rectangle x:Name="Wall38" Grid.Row="3" Grid.Column="2" Fill="Black"/>
+            <Rectangle x:Name="Wall39" Grid.Row="2" Grid.Column="3" Fill="Black"/>
+            <Rectangle x:Name="Wall40" Grid.Row="5" Grid.Column="2" Fill="Black"/>
+            <Rectangle x:Name="Wall41" Grid.Row="6" Grid.Column="2" Fill="Black"/>
+            <Rectangle x:Name="Wall42" Grid.Row="7" Grid.Column="2" Fill="Black"/>
+            <Rectangle x:Name="Wall43" Grid.Row="7" Grid.Column="3" Fill="Black"/>
+            <Rectangle x:Name="Wall44" Grid.Row="7" Grid.Column="4" Fill="Black"/>
+            <Rectangle x:Name="Wall45" Grid.Row="7" Grid.Column="5" Fill="Black"/>
+            <Rectangle x:Name="Wall46" Grid.Row="7" Grid.Column="6" Fill="Black"/>
+            <Rectangle x:Name="Wall47" Grid.Row="7" Grid.Column="7" Fill="Black"/>
+            <Rectangle x:Name="Wall48" Grid.Row="3" Grid.Column="7" Fill="Black"/>
+            <Rectangle x:Name="Wall49" Grid.Row="4" Grid.Column="7" Fill="Black"/>
+            <Rectangle x:Name="Wall50" Grid.Row="5" Grid.Column="7" Fill="Black"/>
+            <Rectangle x:Name="Wall51" Grid.Row="6" Grid.Column="7" Fill="Black"/>
+            <Rectangle x:Name="Wall52" Grid.Row="2" Grid.Column="5" Fill="Black"/>
+            <Rectangle x:Name="Wall53" Grid.Row="2" Grid.Column="6" Fill="Black"/>
+            <Rectangle x:Name="Wall54" Grid.Row="2" Grid.Column="7" Fill="Black"/>
+            <Rectangle x:Name="Wall55" Grid.Row="4" Grid.Column="5" Fill="Black"/>
+            <Rectangle x:Name="Wall56" Grid.Row="5" Grid.Column="5" Fill="Black"/>
+            <Rectangle x:Name="Wall57" Grid.Row="5" Grid.Column="4" Fill="Black"/>
+
+            <!-- Empty (White Path) -->
+            <Rectangle x:Name="Empty1" Grid.Row="1" Grid.Column="2" Fill="White"/>
+            <Rectangle x:Name="Empty2" Grid.Row="1" Grid.Column="3" Fill="White"/>
+            <Rectangle x:Name="Empty3" Grid.Row="1" Grid.Column="4" Fill="White"/>
+            <Rectangle x:Name="Empty4" Grid.Row="1" Grid.Column="5" Fill="White"/>
+            <Rectangle x:Name="Empty5" Grid.Row="1" Grid.Column="6" Fill="White"/>
+            <Rectangle x:Name="Empty6" Grid.Row="1" Grid.Column="7" Fill="White"/>
+            <Rectangle x:Name="Empty7" Grid.Row="1" Grid.Column="8" Fill="White"/>
+            <Rectangle x:Name="Empty8" Grid.Row="2" Grid.Column="4" Fill="White"/>
+            <Rectangle x:Name="Empty9" Grid.Row="2" Grid.Column="8" Fill="White"/>
+            <Rectangle x:Name="Empty10" Grid.Row="3" Grid.Column="3" Fill="White"/>
+            <Rectangle x:Name="Empty11" Grid.Row="3" Grid.Column="4" Fill="White"/>
+            <Rectangle x:Name="Empty12" Grid.Row="3" Grid.Column="5" Fill="White"/>
+            <Rectangle x:Name="Empty13" Grid.Row="3" Grid.Column="6" Fill="White"/>
+            <Rectangle x:Name="Empty14" Grid.Row="3" Grid.Column="8" Fill="White"/>
+            <Rectangle x:Name="Empty15" Grid.Row="4" Grid.Column="2" Fill="White"/>
+            <Rectangle x:Name="Empty16" Grid.Row="4" Grid.Column="3" Fill="White"/>
+            <Rectangle x:Name="Empty17" Grid.Row="4" Grid.Column="6" Fill="White"/>
+            <Rectangle x:Name="Empty18" Grid.Row="4" Grid.Column="8" Fill="White"/>
+            <Rectangle x:Name="Empty19" Grid.Row="5" Grid.Column="3" Fill="White"/>
+            <Rectangle x:Name="Empty22" Grid.Row="5" Grid.Column="6" Fill="White"/>
+            <Rectangle x:Name="Empty23" Grid.Row="5" Grid.Column="8" Fill="White"/>
+            <Rectangle x:Name="Empty24" Grid.Row="6" Grid.Column="3" Fill="White"/>
+            <Rectangle x:Name="Empty25" Grid.Row="6" Grid.Column="4" Fill="White"/>
+            <Rectangle x:Name="Empty0" Grid.Row="6" Grid.Column="5" Fill="White"/>
+            <Rectangle x:Name="Empty26" Grid.Row="6" Grid.Column="6" Fill="White"/>
+            <Rectangle x:Name="Empty28" Grid.Row="6" Grid.Column="8" Fill="White"/>
+            <Rectangle x:Name="Empty31" Grid.Row="7" Grid.Column="8" Fill="White"/>
+            <Rectangle x:Name="Empty32" Grid.Row="8" Grid.Column="2" Fill="White"/>
+            <Rectangle x:Name="Empty33" Grid.Row="8" Grid.Column="3" Fill="White"/>
+            <Rectangle x:Name="Empty03" Grid.Row="8" Grid.Column="4" Fill="White"/>
+            <Rectangle x:Name="Empty34" Grid.Row="8" Grid.Column="5" Fill="White"/>
+            <Rectangle x:Name="Empty05" Grid.Row="8" Grid.Column="6" Fill="White"/>
+            <Rectangle x:Name="Empty35" Grid.Row="8" Grid.Column="7" Fill="White"/>
+            <Rectangle x:Name="Empty04" Grid.Row="8" Grid.Column="8" Fill="White"/>
+
+            <Rectangle x:Name="Empty06" Grid.Row="2" Grid.Column="1" Fill="White"/>
+            <Rectangle x:Name="Empty07" Grid.Row="3" Grid.Column="1" Fill="White"/>
+            <Rectangle x:Name="Empty08" Grid.Row="4" Grid.Column="1" Fill="White"/>
+            <Rectangle x:Name="Empty09" Grid.Row="5" Grid.Column="1" Fill="White"/>
+            <Rectangle x:Name="Empty010" Grid.Row="6" Grid.Column="1" Fill="White"/>
+            <Rectangle x:Name="Empty011" Grid.Row="7" Grid.Column="1" Fill="White"/>
+            <Rectangle x:Name="Empty012" Grid.Row="8" Grid.Column="1" Fill="White"/>
+
+            <!-- Player (Blue Square) -->
+            <Rectangle x:Name="Player" Grid.Row="1" Grid.Column="1" Fill="Blue"/>
+
+            <!-- Goal (Red Square) -->
+            <Rectangle x:Name="Goal" Grid.Row="4" Grid.Column="4" Fill="Red"/>
+        </Grid>
     </Grid>
 </Window>
