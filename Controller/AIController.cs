@@ -18,5 +18,7 @@ namespace ArduinoMAZE.Controller
         {
             GLOBALmazeMatrix = mazeMatrix;
         }
+
+        
     }
 }

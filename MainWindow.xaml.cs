@@ -1,4 +1,5 @@
 ﻿using ArduinoMAZE.Controller;
+using ArduinoMAZE.Model;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text;
@@ -11,6 +12,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Linq;
+using Newtonsoft.Json.Linq;
+using System.Globalization;
 
 namespace ArduinoMAZE
 {
@@ -20,7 +24,9 @@ namespace ArduinoMAZE
     public partial class MainWindow : Window
     {
         ManualController manualController;
-        
+        DAO_API DAO_api;
+        JsonFilter jsonFilter;
+
         //ObservableCollection est apparément mieux que List pour les bindings.
         ObservableCollection<string> Options = new ObservableCollection<string>(
             new string[] { "Manuel", "Aléatoire", "IA" }
@@ -61,18 +67,24 @@ namespace ArduinoMAZE
         bool isRunning;
         bool KeyPressed = false;
 
+        double[,] weights_ih;
+        double[,] weights_ho;
+
         public MainWindow()
         {
             InitializeComponent();
             manualController = new ManualController();
+            jsonFilter = new JsonFilter();
+            DAO_api = new DAO_API();
             CB_Options.ItemsSource = Options;
             TB_Score.Text = $"Score: {Score}";
+            InitializeCB_Models();
             Grid_Maze.Children.Clear();
         }
-        public void Load_Model()
+
+        private async void InitializeCB_Models()
         {
-            BTN_Start.IsEnabled = true;
-            InitializeMaze();
+            CB_Models.ItemsSource = await DAO_api.GetNomsModeles();
         }
 
         private async void BTN_Start_Click(object sender, RoutedEventArgs e)
@@ -102,8 +114,7 @@ namespace ArduinoMAZE
                     // Aléatoire
                     break;
                 case "IA":
-                    AIController aiController = new AIController();
-                    // aiController.AILogic(mazeMatrix, playerRow = 1, playerCol = 1);
+                    RunAI();
                     break;
                 case "":
                     MessageBox.Show("Please choose a mode");
@@ -138,11 +149,31 @@ namespace ArduinoMAZE
                             // Task.Run() est utilisé pour eviter que messagebox bloque le code (var task a fix le fait que ca marchait pas)
                             var task = Task.Run(() => MessageBox.Show("You won!"));
                             isRunning = false;
+
+                            BTN_Start.IsEnabled = false;
+                            BTN_Stop.IsEnabled = false;
+                            BTN_Reset.IsEnabled = true;
+                            BTN_Load.IsEnabled = false;
                         }
                         UpdateMaze(playerLocation, previousLocation);
                     }
                 }
                 KeyPressed = false;
+            }
+        }
+
+        private async Task RunAI()
+        {
+            // AI
+            while (isRunning)
+            {
+                await Task.Delay(100);
+                // check tout les cotes + playerlocation et créer une table comme la table d'entrainement
+                // faire la prediction et bouger l'IA
+                int[,] AISurroundings = new int[3, 3];
+
+
+
             }
         }
 
@@ -246,20 +277,30 @@ namespace ArduinoMAZE
             TB_Score.Text = $"Score: {Score}";
             mazeMatrix = (string[,])defaultMatrix.Clone();
 
-            MessageBox.Show(mazeMatrix[4,4].ToString());
-            MessageBox.Show(defaultMatrix[4,4].ToString());
             InitializeMaze();
         }
 
-        private void BTN_Load_Click(object sender, RoutedEventArgs e)
+        private async void BTN_Load_Click(object sender, RoutedEventArgs e)
         {
             BTN_Reset.IsEnabled = false;
             BTN_Start.IsEnabled = true;
             BTN_Stop.IsEnabled = false;
+ 
+            if (CB_Models.SelectedItem == null)
+            {
+                MessageBox.Show("Please choose a model");
+                return;
+            }
+            var reponse = await DAO_api.getModelByName(CB_Models.SelectedItem.ToString());
+            if (reponse != null)
+            {
+                weights_ih = jsonFilter.FilterMatrixString(reponse.weights_ih);
+                weights_ho = jsonFilter.FilterMatrixString(reponse.weights_ho);
 
-            DBConnection_Window db = new DBConnection_Window();
-            db.Show();
+                // check tout les cotes + playerlocation et créer une table comme la table d'entrainement
+                // faire la prediction et bouger l'IA
 
+            }
         }
     }
 }
