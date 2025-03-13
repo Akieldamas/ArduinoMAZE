@@ -15,7 +15,7 @@ namespace ArduinoMAZE.Controller
         
         public static double AIPrediction(int[] matrixAIMovement, int INPUT_SIZE, int HIDDEN_SIZE, double[,] weights_ih, double[,] weights_ho) 
         {
-            MessageBox.Show(weights_ih[0, 20].ToString());
+         //   MessageBox.Show(weights_ih[0, 20].ToString());
             // Calculate hidden layer outputs
             double[] PredictHidden = new double[HIDDEN_SIZE];
             double PredictOutput = 0;
@@ -24,7 +24,7 @@ namespace ArduinoMAZE.Controller
                 double sum = 0;
                 for (int k = 0; k < INPUT_SIZE; k++)
                 {
-                    sum += Convert.ToInt32(matrixAIMovement[k]) * weights_ih[j, k]; // Use 'row' instead of 'k'
+                    sum += matrixAIMovement[k] * weights_ih[j, k]; // Use 'row' instead of 'k'
                 }
 
                 PredictHidden[j] = Sigmoid(sum);
@@ -32,7 +32,7 @@ namespace ArduinoMAZE.Controller
             }
 
             PredictOutput = Sigmoid(PredictOutput);
-            PredictOutput = Math.Round(PredictOutput, 2);
+        //    PredictOutput = Math.Round(PredictOutput, 2);
 
             return PredictOutput;
         }

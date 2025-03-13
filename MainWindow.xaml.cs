@@ -98,21 +98,24 @@ namespace ArduinoMAZE
                 // Remplir IntAISurroundings
                 int[] IntAISurroundings = new int[7];
 
-                if (previousLocation[0] == 0)
+                if (previousLocation[1] == 0)
                     IntAISurroundings[0] = 0;
                 else IntAISurroundings[0] = playerLocation[1] - previousLocation[1]; // { 1,2} = [Y,X]  si [X,Y] alors [2,1]
               
-                if (previousLocation[1] == 0) 
+                if (previousLocation[0] == 0) 
                     IntAISurroundings[1] = 0;
                 else IntAISurroundings[1] = playerLocation[0] - previousLocation[0];
                 
                 IntAISurroundings[2] = 0;
 
                 string[] AISurroundings = new string[4];
-                AISurroundings[0] = mazeMatrix[playerLocation[0] - 1, playerLocation[1] + 0]; // Gauche
-                AISurroundings[1] = mazeMatrix[playerLocation[0] + 1, playerLocation[1] + 0]; // Droite
-                AISurroundings[2] = mazeMatrix[playerLocation[0] + 0, playerLocation[1] + 1]; // Bas
-                AISurroundings[3] = mazeMatrix[playerLocation[0] + 0, playerLocation[1] - 1]; // Haut
+                AISurroundings[0] = mazeMatrix[playerLocation[0] - 1, playerLocation[1]]; // Haut
+                AISurroundings[1] = mazeMatrix[playerLocation[0] + 1, playerLocation[1]]; // Bas
+                AISurroundings[2] = mazeMatrix[playerLocation[1] + 1, playerLocation[0]]; // Droite (RIGHT)
+                AISurroundings[3] = mazeMatrix[playerLocation[1] - 1, playerLocation[0]]; // Gauche (LEFT)
+
+
+
 
 
                 for (int i = 3; i < 7; i++)
@@ -126,10 +129,10 @@ namespace ArduinoMAZE
                         IntAISurroundings[i] = 0;
                     }
                 }
-                MessageBox.Show("IntAISurroundings: " + IntAISurroundings[0] + " " + IntAISurroundings[1] + " " + IntAISurroundings[2] + " " + IntAISurroundings[3] + " " + IntAISurroundings[4] + " " + IntAISurroundings[5] + " " + IntAISurroundings[6]);
-                
-                double output = AIController.AIPrediction(IntAISurroundings, IntAISurroundings.GetLength(0) - 1, weights_Size, weights_ih, weights_ho);
+                Debug.WriteLine("IntAISurroundings: " + string.Join(", ", IntAISurroundings));
+                double output = AIController.AIPrediction(IntAISurroundings, IntAISurroundings.Length, weights_Size, weights_ih, weights_ho);
                 Debug.WriteLine("Output: " + output);
+
 
                 if (output > 0.9)
                 {
@@ -386,6 +389,11 @@ namespace ArduinoMAZE
                     KeyPressed = true;
                     break;
             }
+        }
+
+        private void CB_Models_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            InitializeCB_Models();
         }
     }
 }

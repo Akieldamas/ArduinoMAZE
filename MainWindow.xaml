@@ -25,7 +25,7 @@
             <Button x:Name="BTN_Stop" IsEnabled="False" Content="Stop" Width="100" Height="30" Margin="0,0,0,10" HorizontalAlignment="Left" Click="BTN_Stop_Click"/>
             <Button x:Name="BTN_Reset" IsEnabled="False" Content="Reset" Width="100" Height="30" Margin="0,0,0,10" HorizontalAlignment="Left" Click="BTN_Reset_Click"/>
             <StackPanel Orientation="Horizontal">
-                <ComboBox x:Name="CB_Models" Width="138" Height="26"/>
+                <ComboBox x:Name="CB_Models" Width="138" Height="26" MouseLeftButtonDown="CB_Models_MouseLeftButtonDown"/>
                 <Button x:Name="BTN_Load" IsEnabled="True" Content="Load" Width="100" Height="30" Margin="5,0,0,0" HorizontalAlignment="Left" Click="BTN_Load_Click"/>
             </StackPanel>
             <TextBlock x:Name="TB_Score" Text="Score: 0" FontSize="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,0,0,0" Grid.Row="1"/>
