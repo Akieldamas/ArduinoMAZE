@@ -12,6 +12,9 @@ namespace ArduinoMAZE.Controller
     {
         public JsonFilter()
         { }
+
+        int GLOBALweightSize = 0;
+
         public double[,] FilterMatrixString(string ReceivedArray)
         {
             string[] StringArray = ReceivedArray.Split("],");
@@ -31,6 +34,7 @@ namespace ArduinoMAZE.Controller
                 }
 
                 string[] values = StringArray[i].Split(','); // Split into individual numbers
+                GLOBALweightSize = values.Length;
 
 
                 for (int j = 0; j < values.Length; j++)
@@ -39,6 +43,10 @@ namespace ArduinoMAZE.Controller
                 }
             }
             return array;
+        }
+        public int GetWeightSize()
+        {
+            return GLOBALweightSize;
         }
     }
 }

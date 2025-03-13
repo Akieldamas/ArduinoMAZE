@@ -62,13 +62,14 @@ namespace ArduinoMAZE
 
         int[] playerLocation = { 1, 1 };
         int[] playerDirection = { 0, 0 };
-        int[] previousLocation = { 1, 1 };
+        int[] previousLocation = { 0, 0 };
         int Score = 1000;
         bool isRunning;
         bool KeyPressed = false;
 
         double[,] weights_ih;
         double[,] weights_ho;
+        int weights_Size;
 
         public MainWindow()
         {
@@ -87,43 +88,98 @@ namespace ArduinoMAZE
             CB_Models.ItemsSource = await DAO_api.GetNomsModeles();
         }
 
-        private async void BTN_Start_Click(object sender, RoutedEventArgs e)
+        private async Task RunAI()
         {
-            InitializeMaze();
-
-            if (CB_Options.SelectedItem == null)
+            while (isRunning)
             {
-                MessageBox.Show("Please choose a mode");
-                return;
-            }
+                // check tout les cotes + playerlocation et créer une table comme la table d'entrainement
+                // faire la prediction et bouger l'IA
+                
+                // Remplir IntAISurroundings
+                int[] IntAISurroundings = new int[7];
 
-            BTN_Start.IsEnabled = false;
-            BTN_Stop.IsEnabled = true;
-            BTN_Reset.IsEnabled = false;
-            BTN_Load.IsEnabled = false;
+                if (previousLocation[0] == 0)
+                    IntAISurroundings[0] = 0;
+                else IntAISurroundings[0] = playerLocation[1] - previousLocation[1]; // { 1,2} = [Y,X]  si [X,Y] alors [2,1]
+              
+                if (previousLocation[1] == 0) 
+                    IntAISurroundings[1] = 0;
+                else IntAISurroundings[1] = playerLocation[0] - previousLocation[0];
+                
+                IntAISurroundings[2] = 0;
 
-            string selectedOption = CB_Options.SelectedItem.ToString();
+                string[] AISurroundings = new string[4];
+                AISurroundings[0] = mazeMatrix[playerLocation[0] - 1, playerLocation[1] + 0]; // Gauche
+                AISurroundings[1] = mazeMatrix[playerLocation[0] + 1, playerLocation[1] + 0]; // Droite
+                AISurroundings[2] = mazeMatrix[playerLocation[0] + 0, playerLocation[1] + 1]; // Bas
+                AISurroundings[3] = mazeMatrix[playerLocation[0] + 0, playerLocation[1] - 1]; // Haut
 
-            switch(selectedOption)
-            {
-                case "Manuel":
-                    isRunning = true;
-                    RunManual();
-                    break;
-                case "Aléatoire":
-                    // Aléatoire
-                    break;
-                case "IA":
-                    RunAI();
-                    break;
-                case "":
-                    MessageBox.Show("Please choose a mode");
-                    return;
-                case null:
-                    MessageBox.Show("Please choose a mode");
-                    return;
+
+                for (int i = 3; i < 7; i++)
+                {
+                    if (AISurroundings[i - 3] == "#")
+                    {
+                        IntAISurroundings[i] = 1;
+                    }
+                    else
+                    {
+                        IntAISurroundings[i] = 0;
+                    }
+                }
+                MessageBox.Show("IntAISurroundings: " + IntAISurroundings[0] + " " + IntAISurroundings[1] + " " + IntAISurroundings[2] + " " + IntAISurroundings[3] + " " + IntAISurroundings[4] + " " + IntAISurroundings[5] + " " + IntAISurroundings[6]);
+                
+                double output = AIController.AIPrediction(IntAISurroundings, IntAISurroundings.GetLength(0) - 1, weights_Size, weights_ih, weights_ho);
+                Debug.WriteLine("Output: " + output);
+
+                if (output > 0.9)
+                {
+                    playerDirection = new int[] { -1, 0 };
+
+                }
+                else if (output > 0.7)
+                {
+                    // gauche
+                    playerDirection = new int[] { 0, -1 };
+                }
+                else if (output > 0.45)
+                {
+                    playerDirection = new int[] { 1, 0 };
+                }
+                else if (output > 0.1)
+                {
+                    playerDirection = new int[] { 0, 1 };
+                }
+                else
+                {
+                    playerDirection = new int[] { 0, 0 };
+                }
+
+                bool Decision = manualController.ManualLogic(mazeMatrix, playerLocation, playerDirection);
+
+                if (Decision)
+                {
+                    Score -= 50;
+                    TB_Score.Text = $"Score: {Score}";
+
+                    previousLocation = new int[] { playerLocation[0], playerLocation[1] };
+                    playerLocation = new int[] { playerLocation[0] + playerDirection[0], playerLocation[1] + playerDirection[1] };
+                    if (mazeMatrix[playerLocation[0], playerLocation[1]] == "G")
+                    {
+                        // Task.Run() est utilisé pour eviter que messagebox bloque le code (var task a fix le fait que ca marchait pas)
+                        var task = Task.Run(() => MessageBox.Show("You won!"));
+                        isRunning = false;
+
+                        BTN_Start.IsEnabled = false;
+                        BTN_Stop.IsEnabled = false;
+                        BTN_Reset.IsEnabled = true;
+                        BTN_Load.IsEnabled = false;
+                    }
+                    UpdateMaze();
+                }
+                await Task.Delay(250);
             }
         }
+
 
         private async Task RunManual()
         {
@@ -131,6 +187,7 @@ namespace ArduinoMAZE
             KeyDown += new KeyEventHandler(MainWindow_KeyDown);
             while (isRunning)
             {
+                if (isRunning == false) break;
                 Debug.WriteLine("{ " + playerLocation[0] + " , " + playerLocation[1] + " }");
                 Debug.WriteLine("Running: "+ isRunning);
                 await Task.Delay(100);
@@ -155,75 +212,13 @@ namespace ArduinoMAZE
                             BTN_Reset.IsEnabled = true;
                             BTN_Load.IsEnabled = false;
                         }
-                        UpdateMaze(playerLocation, previousLocation);
+                        UpdateMaze();
                     }
                 }
                 KeyPressed = false;
             }
         }
-
-        private async Task RunAI()
-        {
-            // AI
-            while (isRunning)
-            {
-                await Task.Delay(100);
-                // check tout les cotes + playerlocation et créer une table comme la table d'entrainement
-                // faire la prediction et bouger l'IA
-                int[,] AISurroundings = new int[3, 3];
-
-
-
-            }
-        }
-
-        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
-        {
-            switch (e.Key)
-            {
-                case Key.Up:
-                    playerDirection = new int[] { -1, 0 };
-                    KeyPressed = true;
-                    break;
-                case Key.Down:
-                    playerDirection = new int[] { 1, 0 };
-                    KeyPressed = true;
-                    break;
-                case Key.Left:
-                    playerDirection = new int[] { 0, -1 };
-                    KeyPressed = true;
-                    break;
-                case Key.Right:
-                    playerDirection = new int[] { 0, 1 };
-                    KeyPressed = true;
-                    break;
-            }
-        }
-
-        public void UpdateMaze(int[] playerLocation, int[] previousLocation)
-        {
-            mazeMatrix[playerLocation[0], playerLocation[1]] = "P";
-            mazeMatrix[previousLocation[0], previousLocation[1]] = ".";
-
-            foreach (UIElement child in Grid_Maze.Children)
-            {
-                if (child is Rectangle rect)
-                {
-                    int row = Grid.GetRow(rect);
-                    int col = Grid.GetColumn(rect);
-                    
-                    if (row == playerLocation[0] && col == playerLocation[1])
-                    {
-                        rect.Fill = Brushes.Blue;
-                    }
-                    else if (row == previousLocation[0] && col == previousLocation[1])
-                    {
-                        rect.Fill = Brushes.White;
-                    }
-                }
-            }
-        }
-
+ 
         public void InitializeMaze()
         {
             for (int row = 0; row < 10; row++)
@@ -253,6 +248,36 @@ namespace ArduinoMAZE
                 }
             }
         }
+        
+        public void UpdateMaze()
+        {
+            mazeMatrix[playerLocation[0], playerLocation[1]] = "P";
+            mazeMatrix[previousLocation[0], previousLocation[1]] = ".";
+
+            foreach (UIElement child in Grid_Maze.Children)
+            {
+                if (child is Rectangle rect)
+                {
+                    int row = Grid.GetRow(rect);
+                    int col = Grid.GetColumn(rect);
+                    
+                    if (row == playerLocation[0] && col == playerLocation[1])
+                    {
+                        rect.Fill = Brushes.Blue;
+                    }
+                    else if (row == previousLocation[0] && col == previousLocation[1])
+                    {
+                        rect.Fill = Brushes.White;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Boutons functions
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BTN_Stop_Click(object sender, RoutedEventArgs e)
         {
             BTN_Start.IsEnabled = true;
@@ -262,7 +287,6 @@ namespace ArduinoMAZE
 
             isRunning = false;
         }
-
         private void BTN_Reset_Click(object sender, RoutedEventArgs e)
         {
             BTN_Reset.IsEnabled = false;
@@ -279,7 +303,6 @@ namespace ArduinoMAZE
 
             InitializeMaze();
         }
-
         private async void BTN_Load_Click(object sender, RoutedEventArgs e)
         {
             BTN_Reset.IsEnabled = false;
@@ -291,15 +314,77 @@ namespace ArduinoMAZE
                 MessageBox.Show("Please choose a model");
                 return;
             }
+
             var reponse = await DAO_api.getModelByName(CB_Models.SelectedItem.ToString());
+
             if (reponse != null)
             {
                 weights_ih = jsonFilter.FilterMatrixString(reponse.weights_ih);
                 weights_ho = jsonFilter.FilterMatrixString(reponse.weights_ho);
+                weights_Size = jsonFilter.GetWeightSize();
+                MessageBox.Show("Model loaded");
+            }
+        }
 
-                // check tout les cotes + playerlocation et créer une table comme la table d'entrainement
-                // faire la prediction et bouger l'IA
+        private async void BTN_Start_Click(object sender, RoutedEventArgs e)
+        {
+            InitializeMaze();
 
+            if (CB_Options.SelectedItem == null)
+            {
+                MessageBox.Show("Please choose a mode");
+                return;
+            }
+
+            BTN_Start.IsEnabled = false;
+            BTN_Stop.IsEnabled = true;
+            BTN_Reset.IsEnabled = false;
+            BTN_Load.IsEnabled = false;
+
+            string selectedOption = CB_Options.SelectedItem.ToString();
+
+            switch (selectedOption)
+            {
+                case "Manuel":
+                    isRunning = true;
+                    RunManual();
+                    break;
+                case "Aléatoire":
+                    // Aléatoire
+                    break;
+                case "IA":
+                    isRunning = true;
+                    await RunAI(); // Ajoute 'await' pour éviter que le code ne continue sans attendre la fin
+                    break;
+                case "":
+                    MessageBox.Show("Please choose a mode");
+                    return;
+                case null:
+                    MessageBox.Show("Please choose a mode");
+                    return;
+            }
+        }
+
+        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.Up:
+                    playerDirection = new int[] { -1, 0 };
+                    KeyPressed = true;
+                    break;
+                case Key.Down:
+                    playerDirection = new int[] { 1, 0 };
+                    KeyPressed = true;
+                    break;
+                case Key.Left:
+                    playerDirection = new int[] { 0, -1 };
+                    KeyPressed = true;
+                    break;
+                case Key.Right:
+                    playerDirection = new int[] { 0, 1 };
+                    KeyPressed = true;
+                    break;
             }
         }
     }
