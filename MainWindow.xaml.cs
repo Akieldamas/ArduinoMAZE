@@ -81,6 +81,7 @@ namespace ArduinoMAZE
             TB_Score.Text = $"Score: {Score}";
             InitializeCB_Models();
             Grid_Maze.Children.Clear();
+            InitializeMaze();
         }
 
         private async void InitializeCB_Models()
@@ -100,9 +101,9 @@ namespace ArduinoMAZE
 
                 if (previousLocation[1] == 0)
                     IntAISurroundings[0] = 0;
-                else IntAISurroundings[0] = playerLocation[1] - previousLocation[1]; // { 1,2} = [Y,X]  si [X,Y] alors [2,1]
-              
-                if (previousLocation[0] == 0) 
+                else IntAISurroundings[0] = playerLocation[1] - previousLocation[1]; // {1,2} = [Y,X]  si [X,Y] alors [2,1]
+                
+                if (previousLocation[0] == 0)
                     IntAISurroundings[1] = 0;
                 else IntAISurroundings[1] = playerLocation[0] - previousLocation[0];
                 
@@ -113,10 +114,6 @@ namespace ArduinoMAZE
                 AISurroundings[1] = mazeMatrix[playerLocation[0] + 1, playerLocation[1]]; // Bas
                 AISurroundings[2] = mazeMatrix[playerLocation[1] + 1, playerLocation[0]]; // Droite (RIGHT)
                 AISurroundings[3] = mazeMatrix[playerLocation[1] - 1, playerLocation[0]]; // Gauche (LEFT)
-
-
-
-
 
                 for (int i = 3; i < 7; i++)
                 {
@@ -183,7 +180,61 @@ namespace ArduinoMAZE
             }
         }
 
+        private async Task RunAleatoire()
+        {
+            while (isRunning)
+            {
+                await Task.Delay(150);
+                // get the surroundings
+                int[] surroundings = new int[4];
+                int[,] directions = { { -1, 0 }, { 1, 0 }, { 0, 1 }, { 0, -1 } }; // up down right left
 
+                // loops through all 4 possible movement
+                for (int i = 0; i < 4; i++)
+                {
+                    // check if the player can move in that direction
+                    int newX = playerLocation[0] + directions[i, 0];
+                    int newY = playerLocation[1] + directions[i, 1];
+
+                    // check if the player is in the maze's bounds
+                    if (newX >= 0 && newX < mazeMatrix.GetLength(0) && newY >= 0 && newY < mazeMatrix.GetLength(1))
+                    {
+                        if (mazeMatrix[newX, newY] == "#")
+                            surroundings[i] = 1;
+                        else
+                            surroundings[i] = 0;
+                    }
+                    else
+                        surroundings[i] = 1;
+                }
+
+                // get a random direction based on the surroundings and available paths
+                int randomDirection = 0;
+
+                do 
+                { randomDirection = new Random().Next(0, 4); } 
+                while (surroundings[randomDirection] != 0);
+
+                Score -= 50;
+                TB_Score.Text = $"Score: {Score}";
+
+                previousLocation = new int[] { playerLocation[0], playerLocation[1] };
+                playerLocation = new int[] { playerLocation[0] + directions[randomDirection, 0], playerLocation[1] + directions[randomDirection, 1] };
+                if (mazeMatrix[playerLocation[0], playerLocation[1]] == "G")
+                {
+                    // Task.Run() est utilisé pour eviter que messagebox bloque le code (var task a fix le fait que ca marchait pas)
+                    var task = Task.Run(() => MessageBox.Show("You won!"));
+                    isRunning = false;
+
+                    BTN_Start.IsEnabled = false;
+                    BTN_Stop.IsEnabled = false;
+                    BTN_Reset.IsEnabled = true;
+                    BTN_Load.IsEnabled = false;
+                }
+
+                UpdateMaze();
+            }
+        }
         private async Task RunManual()
         {
             KeyPressed = false;
@@ -275,12 +326,6 @@ namespace ArduinoMAZE
                 }
             }
         }
-
-        /// <summary>
-        /// Boutons functions
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void BTN_Stop_Click(object sender, RoutedEventArgs e)
         {
             BTN_Start.IsEnabled = true;
@@ -331,8 +376,6 @@ namespace ArduinoMAZE
 
         private async void BTN_Start_Click(object sender, RoutedEventArgs e)
         {
-            InitializeMaze();
-
             if (CB_Options.SelectedItem == null)
             {
                 MessageBox.Show("Please choose a mode");
@@ -353,7 +396,8 @@ namespace ArduinoMAZE
                     RunManual();
                     break;
                 case "Aléatoire":
-                    // Aléatoire
+                    isRunning = true;
+                    RunAleatoire();
                     break;
                 case "IA":
                     isRunning = true;
