@@ -44,7 +44,6 @@ namespace ArduinoMAZE
             { "#", ".", "#", "#", "#", "#", "#", "#", ".", "#" },
             { "#", ".", ".", ".", ".", ".", ".", ".", ".", "#" },
             { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
-
         };
 
         string[,] mazeMatrix =
@@ -96,18 +95,18 @@ namespace ArduinoMAZE
             {
                 // check tout les cotes + playerlocation et créer une table comme la table d'entrainement
                 // faire la prediction et bouger l'IA
-                
+
                 // Remplir IntAISurroundings
                 int[] IntAISurroundings = new int[7];
 
                 if (previousLocation[1] == 0)
                     IntAISurroundings[0] = 0;
                 else IntAISurroundings[0] = playerLocation[1] - previousLocation[1]; // {1,2} = [Y,X]  si [X,Y] alors [2,1]
-                
+
                 if (previousLocation[0] == 0)
                     IntAISurroundings[1] = 0;
                 else IntAISurroundings[1] = playerLocation[0] - previousLocation[0];
-                
+
                 IntAISurroundings[2] = 0;
 
                 string[] AISurroundings = new string[4];
@@ -130,6 +129,7 @@ namespace ArduinoMAZE
                 Debug.WriteLine("IntAISurroundings: " + string.Join(", ", IntAISurroundings));
                 double output = AIController.AIPrediction(IntAISurroundings, IntAISurroundings.Length, weights_Size, weights_ih, weights_ho);
                 Debug.WriteLine("Output: " + output);
+
 
                 if (output > 0.9)
                 {
@@ -211,8 +211,8 @@ namespace ArduinoMAZE
                 // get a random direction based on the surroundings and available paths
                 int randomDirection = 0;
 
-                do 
-                { randomDirection = new Random().Next(0, 4); } 
+                do
+                { randomDirection = new Random().Next(0, 4); }
                 while (surroundings[randomDirection] != 0);
 
                 Score -= 50;
@@ -243,7 +243,7 @@ namespace ArduinoMAZE
             {
                 if (isRunning == false) break;
                 Debug.WriteLine("{ " + playerLocation[0] + " , " + playerLocation[1] + " }");
-                Debug.WriteLine("Running: "+ isRunning);
+                Debug.WriteLine("Running: " + isRunning);
                 await Task.Delay(100);
                 if (KeyPressed)
                 {
@@ -273,58 +273,6 @@ namespace ArduinoMAZE
             }
         }
 
-        private async Task RunAleatoire()
-        {
-            while (isRunning)
-            {
-                await Task.Delay(150);
-                // get the surroundings
-                int[] surroundings = new int[4];
-                int[,] directions = { { -1, 0 }, { 1, 0 }, { 0, 1 }, { 0, -1 } }; // up down right left
-
-                // loops through all 4 possible movement
-                for (int i = 0; i < 4; i++)
-                {
-                    // check if the player can move in that direction
-                    int newX = playerLocation[0] + directions[i, 0];
-                    int newY = playerLocation[1] + directions[i, 1];
-
-                    // check if the player is in the maze's bounds
-                    if (newX >= 0 && newX < mazeMatrix.GetLength(0) && newY >= 0 && newY < mazeMatrix.GetLength(1))
-                    {
-                        if (mazeMatrix[newX, newY] == "#")
-                            surroundings[i] = 1;
-                        else 
-                            surroundings[i] = 0;
-                    }
-                    else
-                        surroundings[i] = 1;
-                }
-
-                // get a random direction based on the surroundings and available paths
-                int randomDirection = 0;
-                while (surroundings[randomDirection] != 0)
-                {
-                    randomDirection = new System.Random().Next(0, 4);
-                }
-
-                previousLocation = new int[] { playerLocation[0], playerLocation[1] };
-                playerLocation = new int[] { playerLocation[0] + directions[randomDirection, 0], playerLocation[1] + directions[randomDirection, 1] };
-                if (mazeMatrix[playerLocation[0], playerLocation[1]] == "G")
-                {
-                    // Task.Run() est utilisé pour eviter que messagebox bloque le code (var task a fix le fait que ca marchait pas)
-                    var task = Task.Run(() => MessageBox.Show("You won!"));
-                    isRunning = false;
-
-                    BTN_Start.IsEnabled = false;
-                    BTN_Stop.IsEnabled = false;
-                    BTN_Reset.IsEnabled = true;
-                    BTN_Load.IsEnabled = false;
-                }
-
-                UpdateMaze();
-            }
-        }
         public void InitializeMaze()
         {
             for (int row = 0; row < 10; row++)
@@ -332,7 +280,7 @@ namespace ArduinoMAZE
                 for (int col = 0; col < 10; col++)
                 {
                     Rectangle rect = new Rectangle();
-                    switch(mazeMatrix[row, col])
+                    switch (mazeMatrix[row, col])
                     {
                         case "#":
                             rect.Fill = Brushes.Black;
@@ -354,7 +302,7 @@ namespace ArduinoMAZE
                 }
             }
         }
-        
+
         public void UpdateMaze()
         {
             mazeMatrix[playerLocation[0], playerLocation[1]] = "P";
@@ -366,7 +314,7 @@ namespace ArduinoMAZE
                 {
                     int row = Grid.GetRow(rect);
                     int col = Grid.GetColumn(rect);
-                    
+
                     if (row == playerLocation[0] && col == playerLocation[1])
                     {
                         rect.Fill = Brushes.Blue;
@@ -408,7 +356,7 @@ namespace ArduinoMAZE
             BTN_Reset.IsEnabled = false;
             BTN_Start.IsEnabled = true;
             BTN_Stop.IsEnabled = false;
- 
+
             if (CB_Models.SelectedItem == null)
             {
                 MessageBox.Show("Please choose a model");
@@ -422,7 +370,6 @@ namespace ArduinoMAZE
                 weights_ih = jsonFilter.FilterMatrixString(reponse.weights_ih);
                 weights_ho = jsonFilter.FilterMatrixString(reponse.weights_ho);
                 weights_Size = jsonFilter.GetWeightSize();
-                InitializeMaze();
                 MessageBox.Show("Model loaded");
             }
         }
