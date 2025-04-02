@@ -90,19 +90,16 @@ namespace ArduinoMAZE
             CB_Models.ItemsSource = await DAO_api.GetNomsModeles();
         }
 
-        private async Task RunAI()
+        private async Task RunAI() // AI mode
         {
             while (isRunning)
             {
-                // check tout les cotes + playerlocation et créer une table comme la table d'entrainement
-                // faire la prediction et bouger l'IA
-
-                // Remplir IntAISurroundings
+                // get the surroundings
                 int[] IntAISurroundings = new int[7];
 
                 if (previousLocation[1] == 0)
                     IntAISurroundings[0] = 0;
-                else IntAISurroundings[0] = playerLocation[1] - previousLocation[1]; // {1,2} = [Y,X]  si [X,Y] alors [2,1]
+                else IntAISurroundings[0] = playerLocation[1] - previousLocation[1]; // {1,2} = [Y,X]  if [X,Y] then [2,1] cus coding logic is inversed
 
                 if (previousLocation[0] == 0)
                     IntAISurroundings[1] = 0;
@@ -111,10 +108,10 @@ namespace ArduinoMAZE
                 IntAISurroundings[2] = 0; // ESC (always zero)
 
                 string[] AISurroundings = new string[4];
-                AISurroundings[0] = mazeMatrix[playerLocation[0] - 1, playerLocation[1]]; // Haut (ordre)
-                AISurroundings[1] = mazeMatrix[playerLocation[0] + 1, playerLocation[1]]; // Bas
-                AISurroundings[2] = mazeMatrix[playerLocation[0], playerLocation[1] + 1]; // Right
-                AISurroundings[3] = mazeMatrix[playerLocation[0], playerLocation[1] - 1]; // Gauche
+                AISurroundings[0] = mazeMatrix[playerLocation[0] - 1, playerLocation[1]]; // UP (ordre)
+                AISurroundings[1] = mazeMatrix[playerLocation[0] + 1, playerLocation[1]]; // DOWN
+                AISurroundings[2] = mazeMatrix[playerLocation[0], playerLocation[1] + 1]; // RIGHT
+                AISurroundings[3] = mazeMatrix[playerLocation[0], playerLocation[1] - 1]; // LEFT
 
                 for (int i = 3; i < 7; i++)
                 {
@@ -170,7 +167,7 @@ namespace ArduinoMAZE
                     playerLocation = new int[] { playerLocation[0] + playerDirection[0], playerLocation[1] + playerDirection[1] };
                     if (mazeMatrix[playerLocation[0], playerLocation[1]] == "G")
                     {
-                        // Task.Run() est utilisé pour eviter que messagebox bloque le code (var task a fix le fait que ca marchait pas)
+                        // Task.Run() // is used to avoid messageobx blocking the code (var task fixed the issue)
                         var task = Task.Run(() => MessageBox.Show("You won!"));
                         isRunning = false;
 
@@ -185,7 +182,7 @@ namespace ArduinoMAZE
             }
         }
 
-        private async Task RunAleatoire()
+        private async Task RunAleatoire() // Random mode, the square moves randomly on its own
         {
             while (isRunning)
             {
@@ -240,7 +237,7 @@ namespace ArduinoMAZE
                 UpdateMaze();
             }
         }
-        private async Task RunManual()
+        private async Task RunManual() // Manual mode, played with the arrow keys
         {
             KeyPressed = false;
             KeyDown += new KeyEventHandler(MainWindow_KeyDown);
@@ -278,7 +275,7 @@ namespace ArduinoMAZE
             }
         }
 
-        public void InitializeMaze()
+        public void InitializeMaze() // Redraws the entire maze
         {
             for (int row = 0; row < 10; row++)
             {
@@ -308,7 +305,7 @@ namespace ArduinoMAZE
             }
         }
 
-        public void UpdateMaze()
+        public void UpdateMaze() // REDRAW THE MAZE based on changes in the player's location
         {
             mazeMatrix[playerLocation[0], playerLocation[1]] = "P";
             mazeMatrix[previousLocation[0], previousLocation[1]] = ".";
@@ -406,7 +403,7 @@ namespace ArduinoMAZE
                     break;
                 case "IA":
                     isRunning = true;
-                    await RunAI(); // Ajoute 'await' pour éviter que le code ne continue sans attendre la fin
+                    await RunAI(); // added await so the code waits for the function to finish
                     break;
                 case "":
                     MessageBox.Show("Please choose a mode");
