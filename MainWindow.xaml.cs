@@ -108,13 +108,13 @@ namespace ArduinoMAZE
                     IntAISurroundings[1] = 0;
                 else IntAISurroundings[1] = playerLocation[0] - previousLocation[0];
 
-                IntAISurroundings[2] = 0;
+                IntAISurroundings[2] = 0; // ESC (always zero)
 
                 string[] AISurroundings = new string[4];
-                AISurroundings[0] = mazeMatrix[playerLocation[0] - 1, playerLocation[1]]; // Haut
+                AISurroundings[0] = mazeMatrix[playerLocation[0] - 1, playerLocation[1]]; // Haut (ordre)
                 AISurroundings[1] = mazeMatrix[playerLocation[0] + 1, playerLocation[1]]; // Bas
-                AISurroundings[2] = mazeMatrix[playerLocation[1] + 1, playerLocation[0]]; // Droite (RIGHT)
-                AISurroundings[3] = mazeMatrix[playerLocation[1] - 1, playerLocation[0]]; // Gauche (LEFT)
+                AISurroundings[2] = mazeMatrix[playerLocation[0], playerLocation[1] + 1]; // Right
+                AISurroundings[3] = mazeMatrix[playerLocation[0], playerLocation[1] - 1]; // Gauche
 
                 for (int i = 3; i < 7; i++)
                 {
