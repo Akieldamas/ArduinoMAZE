@@ -47,6 +47,7 @@
             </StackPanel>
 
             <TextBlock x:Name="TB_Score" Text="Score: 1000" FontSize="14" Grid.Row="3" Grid.Column="1" FontWeight="Bold" Foreground="Gray" Margin="40,0,0,10"/>
+            <TextBlock x:Name="TB_Generation" HorizontalAlignment="Right" Text="Generation: 0" FontSize="14" Grid.Row="3" Grid.Column="1" FontWeight="Bold" Foreground="Gray" Margin="40,0,40,10"/>
 
             <!-- Maze Canvas -->
             <Border Grid.Column="1" Background="#1C1D21" CornerRadius="5" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2">

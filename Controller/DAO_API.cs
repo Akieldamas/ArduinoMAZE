@@ -16,7 +16,7 @@ namespace ArduinoMAZE.Controller
         public DAO_API()
         {
             client = new HttpClient();
-            client.BaseAddress = new Uri("https://guerraz.alwaysdata.net");
+            client.BaseAddress = new Uri("https://este.alwaysdata.net");
         }
 
         public async Task<List<string>> GetNomsModeles()

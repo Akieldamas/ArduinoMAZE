@@ -29,7 +29,7 @@ namespace ArduinoMAZE
 
         //ObservableCollection est apparément mieux que List pour les bindings.
         ObservableCollection<string> Options = new ObservableCollection<string>(
-            new string[] { "Manuel", "Aléatoire", "IA" }
+            new string[] { "Manuel", "Aléatoire", "IA", "Reinforcement (Q-Learning)" }
         );
 
         string[,] defaultMatrix =
@@ -97,7 +97,20 @@ namespace ArduinoMAZE
 
         private async void InitializeCB_Models()
         {
+            CB_Models.Items.Clear();
+            CB_Models.ItemsSource = null;
             CB_Models.ItemsSource = await DAO_api.GetNomsModeles();
+        }
+
+        private async Task RunReinforcement()
+        {
+            Dictionary<int[], double[]> QTable = new Dictionary<int[], double[]>(); // intaisurroundings (player location & surroundings)
+
+            while (isRunning)
+            {
+
+
+            }
         }
 
         private async Task RunAI() // AI mode
@@ -450,6 +463,8 @@ namespace ArduinoMAZE
         private void CB_Models_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             InitializeCB_Models();
+
+
         }
         private void BorderTop_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
