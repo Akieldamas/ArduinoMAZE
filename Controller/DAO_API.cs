@@ -13,14 +13,44 @@ namespace ArduinoMAZE.Controller
     public class DAO_API
     {
         HttpClient client;
+        private readonly string loginUsername = "darklion84";
+        private readonly string loginPassword = "N4rT7kA2vL9pQwX3";
+
+        string authToken = "";
+
         public DAO_API()
         {
             client = new HttpClient();
             client.BaseAddress = new Uri("https://este.alwaysdata.net");
         }
 
+        private async Task loginToAPI()
+        {
+            var body = new
+            {
+                username = loginUsername,
+                password = loginPassword
+            };
+
+            string json = JsonConvert.SerializeObject(body);
+
+            using (var content = new StringContent(json, Encoding.UTF8, "application/json"))
+            {
+                var response = await client.PostAsync("/login", content);
+                response.EnsureSuccessStatusCode();
+                if (response.IsSuccessStatusCode)
+                {
+                    authToken = await response.Content.ReadAsStringAsync();
+                    tokenModel token = JsonConvert.DeserializeObject<tokenModel>(authToken);
+                    authToken = token.token;
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
+                }
+            }
+        }
+
         public async Task<List<string>> GetNomsModeles()
         {
+            await loginToAPI();
 
             var response = await client.GetAsync("/getAllModelNames");
             response.EnsureSuccessStatusCode();
@@ -39,6 +69,8 @@ namespace ArduinoMAZE.Controller
 
         public async Task<AIModel> getModelByName(string modelName)
         {
+            await loginToAPI();
+
             var response = await client.GetAsync($"/getModelByName/{modelName}");
             response.EnsureSuccessStatusCode();
             if (response.IsSuccessStatusCode)
