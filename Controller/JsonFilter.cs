@@ -39,7 +39,7 @@ namespace ArduinoMAZE.Controller
 
                 for (int j = 0; j < values.Length; j++)
                 {
-                    array[i, j] = double.Parse(values[j], CultureInfo.InvariantCulture); // Convert to double and store
+                    array[i, j] = double.Parse(values[j].Trim(' ', '"'), CultureInfo.InvariantCulture); // Convert to double and store
                 }
             }
             return array;

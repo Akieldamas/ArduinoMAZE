@@ -26,6 +26,7 @@ namespace ArduinoMAZE
         ManualController manualController;
         DAO_API DAO_api;
         JsonFilter jsonFilter;
+        AIController aiController;
 
         //ObservableCollection est apparément mieux que List pour les bindings.
         ObservableCollection<string> Options = new ObservableCollection<string>(
@@ -88,6 +89,7 @@ namespace ArduinoMAZE
             manualController = new ManualController();
             jsonFilter = new JsonFilter();
             DAO_api = new DAO_API();
+            aiController = new AIController();
             CB_Options.ItemsSource = Options;
             TB_Score.Text = $"Score: {Score}";
             InitializeCB_Models();
@@ -105,10 +107,26 @@ namespace ArduinoMAZE
         private async Task RunReinforcement()
         {
             Dictionary<int[], double[]> QTable = new Dictionary<int[], double[]>(); // intaisurroundings (player location & surroundings)
+            double learning_rate = 0.1;
+            double discount_factor = 0.9;
+            double epsilon= 0.1;
 
-            while (isRunning)
+            for (int i = 0; i < 1000; i++)
             {
+                await Task.Delay(250);
+                if (isRunning == false) break;
 
+                // get the surroundings
+                int[] state = aiController.GetState(mazeMatrix, playerLocation, previousLocation);
+
+                //initialisee Q Table
+                if (!QTable.ContainsKey(state))
+                {
+                    QTable[state] = new double[4]; // 4 actions possible
+
+                    
+                }
+                List<int> validActions = new List<int>();
 
             }
         }
@@ -148,7 +166,7 @@ namespace ArduinoMAZE
                     }
                 }
                 Debug.WriteLine("IntAISurroundings: " + string.Join(", ", IntAISurroundings));
-                double output = AIController.AIPrediction(IntAISurroundings, IntAISurroundings.Length, weights_Size, weights_ih, weights_ho);
+                double output = aiController.AIPrediction(IntAISurroundings, IntAISurroundings.Length, weights_Size, weights_ih, weights_ho);
                 Debug.WriteLine("Output: " + output);
 
                 Debug.WriteLine(output);
@@ -394,6 +412,7 @@ namespace ArduinoMAZE
             {
                 weights_ih = jsonFilter.FilterMatrixString(reponse.weights_ih);
                 weights_ho = jsonFilter.FilterMatrixString(reponse.weights_ho);
+
                 weights_Size = jsonFilter.GetWeightSize();
                 MessageBox.Show("Model loaded");
             }
