@@ -41,19 +41,12 @@ namespace ArduinoMAZE.Controller
             return 1 / (1 + Math.Exp(-sum));
         }
 
-        public int[] GetState(string[,] mazeMatrix, int[] playerLocation, int[] previousLocation)
+        public int[] GetState(string[,] mazeMatrix, int[] playerLocation)
         {
-            int[] state = new int[7];
+            int[] state = new int[6];
 
-            if (previousLocation[1] == 0)
-                state[0] = 0;
-            else state[0] = playerLocation[1] - previousLocation[1]; // {1,2} = [Y,X]  if [X,Y] then [2,1] cus coding logic is inversed
-
-            if (previousLocation[0] == 0)
-                state[1] = 0;
-            else state[1] = playerLocation[0] - previousLocation[0];
-
-            state[2] = 0; // ESC (always zero)
+            state[0] = playerLocation[1]; // {1,2} = [Y,X]  if [X,Y] then [2,1] cus coding logic is inversed
+            state[1] = playerLocation[0];
 
             string[] AISurroundings = new string[4];
             AISurroundings[0] = mazeMatrix[playerLocation[0] - 1, playerLocation[1]]; // UP (ordre)
@@ -61,7 +54,7 @@ namespace ArduinoMAZE.Controller
             AISurroundings[2] = mazeMatrix[playerLocation[0], playerLocation[1] + 1]; // RIGHT
             AISurroundings[3] = mazeMatrix[playerLocation[0], playerLocation[1] - 1];
 
-            for (int i = 3; i < 7; i++)
+            for (int i = 3; i < 6; i++)
             {
                 if (AISurroundings[i - 3] == "#")
                 {

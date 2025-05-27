@@ -107,27 +107,86 @@ namespace ArduinoMAZE
         private async Task RunReinforcement()
         {
             Dictionary<int[], double[]> QTable = new Dictionary<int[], double[]>(); // intaisurroundings (player location & surroundings)
-            double learning_rate = 0.1;
-            double discount_factor = 0.9;
-            double epsilon= 0.1;
+            double alpha = 0.1; // learning rate
+            double discount_factor = 0.9; // gamma
+            double epsilon= 0.25;
 
-            for (int i = 0; i < 1000; i++)
+            int reward = -50;
+
+            int games_count = 1;
+            int max_games = 100;
+            int[] currentState = new int[6];
+            List<int> validActions = new List<int>();
+
+            bool Decision;
+
+            while (games_count <= max_games)
             {
                 await Task.Delay(250);
-                if (isRunning == false) break;
-
-                // get the surroundings
-                int[] state = aiController.GetState(mazeMatrix, playerLocation, previousLocation);
-
-                //initialisee Q Table
-                if (!QTable.ContainsKey(state))
+                currentState = aiController.GetState(mazeMatrix, playerLocation);
+                for (int i = 3; i < 6; i++)
                 {
-                    QTable[state] = new double[4]; // 4 actions possible
-
-                    
+                    if (currentState[i] == 0)
+                    {
+                        validActions.Add(i - 3); // add the action index (0 = up, 1 = down, 2 = right, 3 = left)
+                    }
                 }
-                List<int> validActions = new List<int>();
 
+                Random rand = new Random();
+                double randNumber = rand.NextDouble();
+                
+                if (randNumber <= epsilon)
+                {
+                    // exploration = random number
+                    int randIndex = rand.Next(validActions.Count);
+                    int action = validActions[randIndex];
+
+                    switch (action)
+                    {
+                        case 0: // up
+                            playerDirection = new int[] { -1, 0 };
+                            break;
+                        case 1: // down
+                            playerDirection = new int[] { 1, 0 };
+                            break;
+                        case 2: // right
+                            playerDirection = new int[] { 0, 1 };
+                            break;
+                        case 3: // left
+                            playerDirection = new int[] { 0, -1 };
+                            break;
+                    }
+
+                    Decision = manualController.ManualLogic(mazeMatrix, playerLocation, playerDirection);
+                }
+                else
+                {
+                    // exploitation
+
+                    Decision = true;
+                }
+
+                if (Decision)
+                {
+                    Score -= 50;
+                    TB_Score.Text = $"Score: {Score}";
+                    previousLocation = new int[] { playerLocation[0], playerLocation[1] };
+                    playerLocation = new int[] { playerLocation[0] + playerDirection[0], playerLocation[1] + playerDirection[1] };
+                    if (mazeMatrix[playerLocation[0], playerLocation[1]] == ".")
+                    {
+                        reward = -10; // penalty for moving to an empty space
+                    }
+                    if (mazeMatrix[playerLocation[0], playerLocation[1]] == "G")
+                    {
+                        reward = 500; // reward for reaching the goal
+                        // Task.Run() // is used to avoid messageobx blocking the code (var task fixed the issue)
+                        var task = Task.Run(() => MessageBox.Show("You won!"));
+                        isRunning = false;
+                        ResetMaze()
+                    }
+                    UpdateMaze();
+
+                }
             }
         }
 
@@ -384,16 +443,20 @@ namespace ArduinoMAZE
             BTN_Start.IsEnabled = true;
             BTN_Stop.IsEnabled = true;
 
+            ResetMaze();
+        }
+
+        private void ResetMaze()
+        {
             playerLocation = new int[] { 1, 1 };
             playerDirection = new int[] { 0, 0 };
             previousLocation = new int[] { 1, 1 };
-
             Score = 1000;
             TB_Score.Text = $"Score: {Score}";
             mazeMatrix = (string[,])defaultMatrix.Clone();
-
             InitializeMaze();
         }
+
         private async void BTN_Load_Click(object sender, RoutedEventArgs e)
         {
             BTN_Reset.IsEnabled = false;
@@ -446,6 +509,10 @@ namespace ArduinoMAZE
                 case "IA":
                     isRunning = true;
                     await RunAI(); // added await so the code waits for the function to finish
+                    break;
+                case "Reinforcement (Q-Learning)":
+                    isRunning = true;
+                    await RunReinforcement();
                     break;
                 case "":
                     MessageBox.Show("Please choose a mode");
