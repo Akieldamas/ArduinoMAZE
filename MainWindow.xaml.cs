@@ -15,6 +15,8 @@ using System.Windows.Shapes;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using System.Globalization;
+using System.Text.Json;
+using System.IO;
 
 namespace ArduinoMAZE
 {
@@ -27,11 +29,15 @@ namespace ArduinoMAZE
         DAO_API DAO_api;
         JsonFilter jsonFilter;
         AIController aiController;
+        private readonly Random rand;
 
         //ObservableCollection est apparément mieux que List pour les bindings.
         ObservableCollection<string> Options = new ObservableCollection<string>(
             new string[] { "Manuel", "Aléatoire", "IA", "Reinforcement (Q-Learning)" }
         );
+
+
+       
 
         string[,] defaultMatrix =
         {
@@ -75,13 +81,26 @@ namespace ArduinoMAZE
         int[] playerLocation = { 1, 1 };
         int[] playerDirection = { 0, 0 };
         int[] previousLocation = { 0, 0 };
-        int Score = 1000;
+        int Score = 0;
         bool isRunning;
         bool KeyPressed = false;
 
         double[,] weights_ih;
         double[,] weights_ho;
         int weights_Size;
+
+        // parameters for reinforcement learning
+        double alpha = 0.1; // learning rate
+        double discount_factor = 0.9; // gamma
+        double epsilon = 0.25;
+
+        int reward = -50;
+
+        int games_count = 1;
+        int max_games = 100;
+        int[] currentState = new int[6];
+        List<int> validActions = new List<int>();
+        Dictionary<string, double[]> QTable = new Dictionary<string, double[]>();
 
         public MainWindow()
         {
@@ -90,6 +109,7 @@ namespace ArduinoMAZE
             jsonFilter = new JsonFilter();
             DAO_api = new DAO_API();
             aiController = new AIController();
+            rand = new Random();
             CB_Options.ItemsSource = Options;
             TB_Score.Text = $"Score: {Score}";
             InitializeCB_Models();
@@ -106,24 +126,16 @@ namespace ArduinoMAZE
 
         private async Task RunReinforcement()
         {
-            Dictionary<int[], double[]> QTable = new Dictionary<int[], double[]>(); // intaisurroundings (player location & surroundings)
-            double alpha = 0.1; // learning rate
-            double discount_factor = 0.9; // gamma
-            double epsilon= 0.25;
+           
 
-            int reward = -50;
-
-            int games_count = 1;
-            int max_games = 100;
-            int[] currentState = new int[6];
-            List<int> validActions = new List<int>();
-
-            bool Decision;
-
-            while (games_count <= max_games)
+            while (games_count <= max_games && isRunning)
             {
                 await Task.Delay(250);
                 currentState = aiController.GetState(mazeMatrix, playerLocation);
+                string stateKey = string.Join(",", currentState);
+
+                validActions.Clear(); // Clear previous valid actions
+
                 for (int i = 3; i < 6; i++)
                 {
                     if (currentState[i] == 0)
@@ -132,61 +144,75 @@ namespace ArduinoMAZE
                     }
                 }
 
-                Random rand = new Random();
+                if (!QTable.ContainsKey(stateKey))
+                    QTable[stateKey] = new double[] { 0, 0, 0, 0 };
+
                 double randNumber = rand.NextDouble();
-                
-                if (randNumber <= epsilon)
+                int action = 0;
+
+                if (rand.NextDouble() <= epsilon)
                 {
-                    // exploration = random number
-                    int randIndex = rand.Next(validActions.Count);
-                    int action = validActions[randIndex];
-
-                    switch (action)
-                    {
-                        case 0: // up
-                            playerDirection = new int[] { -1, 0 };
-                            break;
-                        case 1: // down
-                            playerDirection = new int[] { 1, 0 };
-                            break;
-                        case 2: // right
-                            playerDirection = new int[] { 0, 1 };
-                            break;
-                        case 3: // left
-                            playerDirection = new int[] { 0, -1 };
-                            break;
-                    }
-
-                    Decision = manualController.ManualLogic(mazeMatrix, playerLocation, playerDirection);
+                    // Exploration: Pick a random valid action
+                    action = validActions[rand.Next(validActions.Count)];
                 }
                 else
                 {
-                    // exploitation
-
-                    Decision = true;
+                    // Exploitation: Choose best action from Q-table
+                    double[] qValues = QTable[stateKey];
+                    action = validActions.OrderByDescending(a => qValues[a]).First();
                 }
 
-                if (Decision)
+                switch (action)
                 {
-                    Score -= 50;
-                    TB_Score.Text = $"Score: {Score}";
-                    previousLocation = new int[] { playerLocation[0], playerLocation[1] };
-                    playerLocation = new int[] { playerLocation[0] + playerDirection[0], playerLocation[1] + playerDirection[1] };
-                    if (mazeMatrix[playerLocation[0], playerLocation[1]] == ".")
-                    {
-                        reward = -10; // penalty for moving to an empty space
-                    }
-                    if (mazeMatrix[playerLocation[0], playerLocation[1]] == "G")
-                    {
-                        reward = 500; // reward for reaching the goal
-                        // Task.Run() // is used to avoid messageobx blocking the code (var task fixed the issue)
-                        var task = Task.Run(() => MessageBox.Show("You won!"));
-                        isRunning = false;
-                        ResetMaze()
-                    }
-                    UpdateMaze();
-
+                    case 0: // UP
+                        playerDirection = new int[] { -1, 0 };
+                        break;
+                    case 1: // DOWN
+                        playerDirection = new int[] { 1, 0 };
+                        break;
+                    case 2: // RIGHT
+                        playerDirection = new int[] { 0, 1 };
+                        break;
+                    case 3: // LEFT
+                        playerDirection = new int[] { 0, -1 };
+                        break;
                 }
+
+                // show player direction
+                Debug.WriteLine("Player Direction: " + string.Join(", ", playerDirection));
+
+                bool Decision = manualController.ManualLogic(mazeMatrix, playerLocation, playerDirection);
+                if (!Decision)
+                {
+                    // Failed move = wall bump = heavy penalty
+                    reward = -150;
+
+                    // Still update Q-table to teach the agent that this was a bad idea
+                    QTable[stateKey][action] += alpha * (reward + discount_factor * QTable[stateKey][action] - QTable[stateKey][action]);
+
+                    Score += reward;
+                    TB_Score.Text = $"Score: {Score}";
+                    continue;
+                }
+                previousLocation = new int[] { playerLocation[0], playerLocation[1] };
+                playerLocation = new int[] { playerLocation[0] + playerDirection[0], playerLocation[1] + playerDirection[1] };
+
+                if (mazeMatrix[playerLocation[0], playerLocation[1]] == ".")
+                {
+                    reward = -50; // penalty for moving to an empty space
+                }
+                else
+                {
+                    reward = 500; // reward for reaching the goal
+                    // Task.Run() // is used to avoid messageobx blocking the code (var task fixed the issue)
+                    var task = Task.Run(() => Console.WriteLine("You won!"));
+                    ResetMaze();
+                }
+                UpdateQValue(stateKey, action, playerLocation);
+
+                Score += reward;
+                TB_Score.Text = $"Score: {Score}";
+                UpdateMaze();
             }
         }
 
@@ -280,6 +306,19 @@ namespace ArduinoMAZE
                 }
                 await Task.Delay(250);
             }
+        }
+
+        private void UpdateQValue(string stateKey, int action, int[] nextPlayerLocation)
+        {
+            int[] nextState = aiController.GetState(mazeMatrix, nextPlayerLocation);
+            string nextKey = string.Join(",", nextState);
+
+            if (!QTable.ContainsKey(nextKey))
+                QTable[nextKey] = new double[] { 0, 0, 0, 0 };
+
+            double maxFutureQ = QTable[nextKey].Max();
+            double currentQ = QTable[stateKey][action];
+            QTable[stateKey][action] += alpha * (reward + discount_factor * maxFutureQ - currentQ);
         }
 
         private async Task RunAleatoire() // Random mode, the square moves randomly on its own
@@ -436,6 +475,34 @@ namespace ArduinoMAZE
             BTN_Load.IsEnabled = true;
 
             isRunning = false;
+            Console.WriteLine("Saving to: " + Directory.GetCurrentDirectory());
+
+            if (QTable.Count > 0)
+            {
+                try
+                {
+                    // Save QTable as JSON
+                    string json = JsonSerializer.Serialize(QTable, new JsonSerializerOptions { WriteIndented = true });
+                    File.WriteAllText("QTable.json", json);
+
+                    // Save QTable as CSV
+                    var sb = new StringBuilder();
+                    foreach (var entry in QTable)
+                    {
+                        string key = entry.Key;
+                        string values = string.Join(",", entry.Value);
+                        sb.AppendLine($"{key},{values}");
+                    }
+
+                    File.WriteAllText("QTable.csv", sb.ToString());
+                    Console.WriteLine("QTable.csv successfully saved!");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed to save CSV: " + ex.Message);
+                }
+            }
+
         }
         private void BTN_Reset_Click(object sender, RoutedEventArgs e)
         {

@@ -68,5 +68,6 @@ namespace ArduinoMAZE.Controller
 
             return state;
         }
+
     }
 }
