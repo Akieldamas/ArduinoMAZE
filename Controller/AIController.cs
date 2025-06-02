@@ -9,7 +9,8 @@ using System.Windows;
 namespace ArduinoMAZE.Controller
 {
     public class AIController
-    {   
+    {
+        int cameFrom = -1;
         public AIController()
         {}
         
@@ -41,11 +42,11 @@ namespace ArduinoMAZE.Controller
             return 1 / (1 + Math.Exp(-sum));
         }
 
-        public int[] GetState(string[,] mazeMatrix, int[] playerLocation)
+        public int[] GetState(string[,] mazeMatrix, int[] playerLocation, int[] previousLocation)
         {
-            int[] state = new int[6];
+            int[] state = new int[7];
 
-            state[0] = playerLocation[1]; // {1,2} = [Y,X]  if [X,Y] then [2,1] cus coding logic is inversed
+            state[0] = playerLocation[1];
             state[1] = playerLocation[0];
 
             string[] AISurroundings = new string[4];
@@ -65,6 +66,19 @@ namespace ArduinoMAZE.Controller
                     state[i] = 0;
                 }
             }
+            // Determine the direction the player came from
+            int dy = playerLocation[0] - previousLocation[0]; // Y
+            int dx = playerLocation[1] - previousLocation[1]; // X
+
+            cameFrom = -1; // Default to undefined
+
+            if (dy == -1 && dx == 0) cameFrom = 0; // Came from UP
+            else if (dy == 1 && dx == 0) cameFrom = 1; // DOWN
+            else if (dy == 0 && dx == 1) cameFrom = 2; // RIGHT
+            else if (dy == 0 && dx == -1) cameFrom = 3; // LEFT
+
+
+            state[6] = cameFrom;
 
             return state;
         }

@@ -92,7 +92,9 @@ namespace ArduinoMAZE
         // parameters for reinforcement learning
         double alpha = 0.1; // learning rate
         double discount_factor = 0.9; // gamma
-        double epsilon = 0.25;
+        
+        double epsilon = 0.05;
+        int generation = 0;
 
         int reward = -50;
 
@@ -126,17 +128,18 @@ namespace ArduinoMAZE
 
         private async Task RunReinforcement()
         {
-           
+            generation += 1;
+            TB_Generation.Text = $"Generation: {generation}";
 
             while (games_count <= max_games && isRunning)
             {
-                await Task.Delay(250);
-                currentState = aiController.GetState(mazeMatrix, playerLocation);
+                await Task.Delay(50);
+
+                currentState = aiController.GetState(mazeMatrix, playerLocation, previousLocation);
                 string stateKey = string.Join(",", currentState);
 
-                validActions.Clear(); // Clear previous valid actions
-
-                for (int i = 3; i < 6; i++)
+                validActions.Clear();
+                for (int i = 3; i < 7; i++)
                 {
                     if (currentState[i] == 0)
                     {
@@ -144,9 +147,11 @@ namespace ArduinoMAZE
                     }
                 }
 
+               // initialise q values
                 if (!QTable.ContainsKey(stateKey))
                     QTable[stateKey] = new double[] { 0, 0, 0, 0 };
 
+                // choose action
                 double randNumber = rand.NextDouble();
                 int action = 0;
 
@@ -185,35 +190,57 @@ namespace ArduinoMAZE
                 if (!Decision)
                 {
                     // Failed move = wall bump = heavy penalty
-                    reward = -150;
+                    reward = -10;
 
                     // Still update Q-table to teach the agent that this was a bad idea
-                    QTable[stateKey][action] += alpha * (reward + discount_factor * QTable[stateKey][action] - QTable[stateKey][action]);
+                    // la formule est differente, theres no S' (future state)
+                    double oldQ = QTable[stateKey][action];
+                    QTable[stateKey][action] = oldQ + alpha * (reward - oldQ);
 
                     Score += reward;
                     TB_Score.Text = $"Score: {Score}";
                     continue;
                 }
+
                 previousLocation = new int[] { playerLocation[0], playerLocation[1] };
                 playerLocation = new int[] { playerLocation[0] + playerDirection[0], playerLocation[1] + playerDirection[1] };
 
                 if (mazeMatrix[playerLocation[0], playerLocation[1]] == ".")
                 {
-                    reward = -50; // penalty for moving to an empty space
+                    reward = -1; // penalty for moving to an empty space
                 }
                 else
                 {
-                    reward = 500; // reward for reaching the goal
+                    reward = 50; // reward for reaching the goal
                     // Task.Run() // is used to avoid messageobx blocking the code (var task fixed the issue)
-                    var task = Task.Run(() => Console.WriteLine("You won!"));
+                    generation += 1;
+                    TB_Generation.Text = $"Generation: {generation}";
+
                     ResetMaze();
                 }
                 UpdateQValue(stateKey, action, playerLocation);
+
+                epsilon = Math.Max(0.05, epsilon - games_count * 0.01); // 0.01 = decay rate
+                
+                games_count++;
+                Debug.WriteLine("Games Count: " + games_count);
 
                 Score += reward;
                 TB_Score.Text = $"Score: {Score}";
                 UpdateMaze();
             }
+        }
+        private void UpdateQValue(string stateKey, int action, int[] nextPlayerLocation)
+        {
+            int[] nextState = aiController.GetState(mazeMatrix, nextPlayerLocation, previousLocation);
+            string nextKey = string.Join(",", nextState);
+
+            if (!QTable.ContainsKey(nextKey))
+                QTable[nextKey] = new double[] { 0, 0, 0, 0 };
+
+            double maxFutureQ = QTable[nextKey].Max();
+            double currentQ = QTable[stateKey][action];
+            QTable[stateKey][action] += alpha * (reward + discount_factor * maxFutureQ - currentQ);
         }
 
         private async Task RunAI() // AI mode
@@ -254,7 +281,6 @@ namespace ArduinoMAZE
                 double output = aiController.AIPrediction(IntAISurroundings, IntAISurroundings.Length, weights_Size, weights_ih, weights_ho);
                 Debug.WriteLine("Output: " + output);
 
-                Debug.WriteLine(output);
                 if (output > 0.9)
                 {
                     playerDirection = new int[] { -1, 0 };
@@ -269,7 +295,7 @@ namespace ArduinoMAZE
                 {
                     playerDirection = new int[] { 1, 0 };
                 }
-                else if (output > 0.1)
+                else if (output > 0.15)
                 {
                     playerDirection = new int[] { 0, 1 };
                 }
@@ -279,7 +305,6 @@ namespace ArduinoMAZE
                     int[,] directions = { { -1, 0 }, { 1, 0 }, { 0, 1 }, { 0, -1 } };
                     int randomDirection = rand.Next(0, 4);
                     playerDirection = new int[] { directions[randomDirection, 0], directions[randomDirection, 1] };
-
                 }
 
                 bool Decision = manualController.ManualLogic(mazeMatrix, playerLocation, playerDirection);
@@ -306,19 +331,6 @@ namespace ArduinoMAZE
                 }
                 await Task.Delay(250);
             }
-        }
-
-        private void UpdateQValue(string stateKey, int action, int[] nextPlayerLocation)
-        {
-            int[] nextState = aiController.GetState(mazeMatrix, nextPlayerLocation);
-            string nextKey = string.Join(",", nextState);
-
-            if (!QTable.ContainsKey(nextKey))
-                QTable[nextKey] = new double[] { 0, 0, 0, 0 };
-
-            double maxFutureQ = QTable[nextKey].Max();
-            double currentQ = QTable[stateKey][action];
-            QTable[stateKey][action] += alpha * (reward + discount_factor * maxFutureQ - currentQ);
         }
 
         private async Task RunAleatoire() // Random mode, the square moves randomly on its own
@@ -521,6 +533,9 @@ namespace ArduinoMAZE
             Score = 1000;
             TB_Score.Text = $"Score: {Score}";
             mazeMatrix = (string[,])defaultMatrix.Clone();
+            
+            games_count = 1;
+
             InitializeMaze();
         }
 
