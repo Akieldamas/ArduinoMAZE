@@ -41,26 +41,17 @@ namespace ArduinoMAZE
 
         string[,] defaultMatrix =
         {
-            // { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
-            //{ "#", "P", ".", "#", ".", ".", ".", "#", ".", "#" },
-            //{ "#", "#", ".", "#", ".", "#", ".", "#", ".", "#" },
-            //{ "#", ".", ".", ".", ".", "#", ".", ".", ".", "#" },
-            //{ "#", ".", "#", "#", ".", "#", "#", "#", ".", "#" },
-            //{ "#", ".", "#", ".", ".", ".", ".", "#", ".", "#" },
-            //{ "#", ".", "#", "#", "#", ".", "#", "#", ".", "#" },
-            //{ "#", ".", ".", ".", ".", ".", ".", "#", ".", "#" },
-            //{ "#", ".", "#", ".", "#", "#", ".", "G", ".", "#" },
-            //{ "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
              { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
-            { "#", "P", ".", ".", ".", ".", ".", ".", ".", "#" },
+            { "#", "P", ".", "#", ".", ".", ".", "#", ".", "#" },
+            { "#", "#", ".", "#", ".", "#", ".", "#", ".", "#" },
+            { "#", ".", ".", ".", ".", "#", ".", ".", ".", "#" },
             { "#", ".", "#", "#", ".", "#", "#", "#", ".", "#" },
             { "#", ".", "#", ".", ".", ".", ".", "#", ".", "#" },
-            { "#", ".", ".", ".", "G", "#", ".", "#", ".", "#" },
-            { "#", ".", "#", ".", "#", "#", ".", "#", ".", "#" },
-            { "#", ".", "#", ".", ".", ".", ".", "#", ".", "#" },
-            { "#", ".", "#", "#", "#", "#", "#", "#", ".", "#" },
-            { "#", ".", ".", ".", ".", ".", ".", ".", ".", "#" },
+            { "#", ".", "#", "#", "#", ".", "#", "#", ".", "#" },
+            { "#", ".", ".", ".", ".", ".", ".", "#", ".", "#" },
+            { "#", ".", "#", ".", "#", "#", ".", "G", ".", "#" },
             { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
+          
         };
 
         string[,] mazeMatrix =
@@ -93,16 +84,17 @@ namespace ArduinoMAZE
         double alpha = 0.1; // learning rate
         double discount_factor = 0.9; // gamma
         
-        double epsilon = 0.05;
+        double epsilon = 0.9;
         int generation = 0;
 
         int reward = -50;
 
         int games_count = 1;
-        int max_games = 100;
+        int max_games = 1000;
         int[] currentState = new int[6];
         List<int> validActions = new List<int>();
         Dictionary<string, double[]> QTable = new Dictionary<string, double[]>();
+        Dictionary<string, int> visitCounts = new Dictionary<string, int>();
 
         public MainWindow()
         {
@@ -164,6 +156,10 @@ namespace ArduinoMAZE
                 {
                     // Exploitation: Choose best action from Q-table
                     double[] qValues = QTable[stateKey];
+                    if (validActions.Count == 0)
+                    {
+                        ResetMaze();
+                    }
                     action = validActions.OrderByDescending(a => qValues[a]).First();
                 }
 
@@ -186,6 +182,12 @@ namespace ArduinoMAZE
                 // show player direction
                 Debug.WriteLine("Player Direction: " + string.Join(", ", playerDirection));
 
+                string posKey = $"{playerLocation[0]},{playerLocation[1]}";
+                if (!visitCounts.ContainsKey(posKey))
+                    visitCounts[posKey] = 0;
+
+                visitCounts[posKey]++;
+
                 bool Decision = manualController.ManualLogic(mazeMatrix, playerLocation, playerDirection);
                 if (!Decision)
                 {
@@ -201,6 +203,25 @@ namespace ArduinoMAZE
                     TB_Score.Text = $"Score: {Score}";
                     continue;
                 }
+                if (visitCounts[posKey] > 5)
+                {
+                    // If the player has visited this position too many times, reset the game
+                    reward = -20; // heavy penalty for getting stuck
+                    double oldQ = QTable[stateKey][action];
+                    QTable[stateKey][action] = oldQ + alpha * (reward - oldQ);
+                    Score += reward;
+                    TB_Score.Text = $"Score: {Score}";
+                    ResetMaze();
+                    visitCounts.Clear();
+                    generation += 1;
+                    TB_Generation.Text = $"Generation: {generation}";
+                    continue;
+                }
+                else if (visitCounts[posKey] == 1)
+                {
+                    reward = 2;
+                }
+
 
                 previousLocation = new int[] { playerLocation[0], playerLocation[1] };
                 playerLocation = new int[] { playerLocation[0] + playerDirection[0], playerLocation[1] + playerDirection[1] };
@@ -215,13 +236,15 @@ namespace ArduinoMAZE
                     // Task.Run() // is used to avoid messageobx blocking the code (var task fixed the issue)
                     generation += 1;
                     TB_Generation.Text = $"Generation: {generation}";
-
+                    visitCounts.Clear();
                     ResetMaze();
                 }
+
                 UpdateQValue(stateKey, action, playerLocation);
 
-                epsilon = Math.Max(0.05, epsilon - games_count * 0.01); // 0.01 = decay rate
-                
+                // epsilon decay
+                epsilon = Math.Max(0.01, epsilon * 0.995);
+
                 games_count++;
                 Debug.WriteLine("Games Count: " + games_count);
 
@@ -529,13 +552,15 @@ namespace ArduinoMAZE
         {
             playerLocation = new int[] { 1, 1 };
             playerDirection = new int[] { 0, 0 };
-            previousLocation = new int[] { 1, 1 };
+            previousLocation = playerLocation;
             Score = 1000;
             TB_Score.Text = $"Score: {Score}";
             mazeMatrix = (string[,])defaultMatrix.Clone();
-            
             games_count = 1;
-
+            visitCounts.Clear();
+            currentState = new int[6];
+            validActions.Clear();
+            reward = 0;
             InitializeMaze();
         }
 
