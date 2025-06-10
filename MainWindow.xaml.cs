@@ -41,17 +41,27 @@ namespace ArduinoMAZE
 
         string[,] defaultMatrix =
         {
-             { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
-            { "#", "P", ".", "#", ".", ".", ".", "#", ".", "#" },
-            { "#", "#", ".", "#", ".", "#", ".", "#", ".", "#" },
-            { "#", ".", ".", ".", ".", "#", ".", ".", ".", "#" },
+            // { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
+            //{ "#", "P", ".", "#", ".", ".", ".", "#", ".", "#" },
+            //{ "#", "#", ".", "#", ".", "#", ".", "#", ".", "#" },
+            //{ "#", ".", ".", ".", ".", "#", ".", ".", ".", "#" },
+            //{ "#", ".", "#", "#", ".", "#", "#", "#", ".", "#" },
+            //{ "#", ".", "#", ".", ".", ".", ".", "#", ".", "#" },
+            //{ "#", ".", "#", "#", "#", ".", "#", "#", ".", "#" },
+            //{ "#", ".", ".", ".", ".", ".", ".", "#", ".", "#" },
+            //{ "#", ".", "#", ".", "#", "#", ".", "G", ".", "#" },
+            //{ "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
+            { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
+            { "#", "P", ".", ".", ".", ".", ".", ".", ".", "#" },
             { "#", ".", "#", "#", ".", "#", "#", "#", ".", "#" },
             { "#", ".", "#", ".", ".", ".", ".", "#", ".", "#" },
-            { "#", ".", "#", "#", "#", ".", "#", "#", ".", "#" },
-            { "#", ".", ".", ".", ".", ".", ".", "#", ".", "#" },
-            { "#", ".", "#", ".", "#", "#", ".", "G", ".", "#" },
+            { "#", ".", ".", ".", "G", "#", ".", "#", ".", "#" },
+            { "#", ".", "#", ".", "#", "#", ".", "#", ".", "#" },
+            { "#", ".", "#", ".", ".", ".", ".", "#", ".", "#" },
+            { "#", ".", "#", "#", "#", "#", "#", "#", ".", "#" },
+            { "#", ".", ".", ".", ".", ".", ".", ".", ".", "#" },
             { "#", "#", "#", "#", "#", "#", "#", "#", "#", "#" },
-          
+
         };
 
         string[,] mazeMatrix =
@@ -71,7 +81,7 @@ namespace ArduinoMAZE
 
         int[] playerLocation = { 1, 1 };
         int[] playerDirection = { 0, 0 };
-        int[] previousLocation = { 0, 0 };
+        int[] previousLocation = { 1, 1 };
         int Score = 0;
         bool isRunning;
         bool KeyPressed = false;
@@ -125,17 +135,20 @@ namespace ArduinoMAZE
 
             while (games_count <= max_games && isRunning)
             {
-                await Task.Delay(50);
+                await Task.Delay(100);
 
                 currentState = aiController.GetState(mazeMatrix, playerLocation, previousLocation);
                 string stateKey = string.Join(",", currentState);
-
+                Debug.WriteLine("Current State: " + stateKey);
                 validActions.Clear();
-                for (int i = 3; i < 7; i++)
+                for (int i = 2; i <= 5; i++)
                 {
+                    Debug.WriteLine("Current State[" + i + "]: " + currentState[i]);
                     if (currentState[i] == 0)
                     {
-                        validActions.Add(i - 3); // add the action index (0 = up, 1 = down, 2 = right, 3 = left)
+                        validActions.Add(i - 2);
+                        Debug.WriteLine("Valid Action: " + i);
+
                     }
                 }
 
@@ -147,20 +160,22 @@ namespace ArduinoMAZE
                 double randNumber = rand.NextDouble();
                 int action = 0;
 
-                if (rand.NextDouble() <= epsilon)
+                if (randNumber <= epsilon)
                 {
-                    // Exploration: Pick a random valid action
+                    // Exploration: Choose random action from valid actions
+                    //show valid actions
+                    Debug.WriteLine("Valid Actions: " + string.Join(", ", validActions));
                     action = validActions[rand.Next(validActions.Count)];
+
+                    Debug.WriteLine("Random Action: " + action);
                 }
                 else
                 {
                     // Exploitation: Choose best action from Q-table
                     double[] qValues = QTable[stateKey];
-                    if (validActions.Count == 0)
-                    {
-                        ResetMaze();
-                    }
+                   
                     action = validActions.OrderByDescending(a => qValues[a]).First();
+                    Debug.WriteLine("Best Action: " + action);
                 }
 
                 switch (action)
@@ -207,6 +222,7 @@ namespace ArduinoMAZE
                 {
                     // If the player has visited this position too many times, reset the game
                     reward = -20; // heavy penalty for getting stuck
+
                     double oldQ = QTable[stateKey][action];
                     QTable[stateKey][action] = oldQ + alpha * (reward - oldQ);
                     Score += reward;
@@ -552,7 +568,7 @@ namespace ArduinoMAZE
         {
             playerLocation = new int[] { 1, 1 };
             playerDirection = new int[] { 0, 0 };
-            previousLocation = playerLocation;
+            previousLocation = new int[] { 1, 1 };
             Score = 1000;
             TB_Score.Text = $"Score: {Score}";
             mazeMatrix = (string[,])defaultMatrix.Clone();

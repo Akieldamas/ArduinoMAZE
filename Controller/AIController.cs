@@ -53,19 +53,20 @@ namespace ArduinoMAZE.Controller
             AISurroundings[0] = mazeMatrix[playerLocation[0] - 1, playerLocation[1]]; // UP (ordre)
             AISurroundings[1] = mazeMatrix[playerLocation[0] + 1, playerLocation[1]]; // DOWN
             AISurroundings[2] = mazeMatrix[playerLocation[0], playerLocation[1] + 1]; // RIGHT
-            AISurroundings[3] = mazeMatrix[playerLocation[0], playerLocation[1] - 1];
+            AISurroundings[3] = mazeMatrix[playerLocation[0], playerLocation[1] - 1]; // LEFT
 
-            for (int i = 3; i < 6; i++)
+            for (int i = 0; i < 4; i++)
             {
-                if (AISurroundings[i - 3] == "#")
+                if (AISurroundings[i] == "#")
                 {
-                    state[i] = 1;
+                    state[i+2] = 1;
                 }
                 else
                 {
-                    state[i] = 0;
+                    state[i+2] = 0;
                 }
             }
+
             // Determine the direction the player came from
             int dy = playerLocation[0] - previousLocation[0]; // Y
             int dx = playerLocation[1] - previousLocation[1]; // X
