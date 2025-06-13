@@ -47,6 +47,7 @@
             </StackPanel>
 
             <TextBlock x:Name="TB_Score" Text="Score: 1000" FontSize="14" Grid.Row="3" Grid.Column="1" FontWeight="Bold" Foreground="Gray" Margin="40,0,0,10"/>
+            <Button x:Name="BTN_ResetReinforcement" Content="Reset Reinforcement" Height="20" Width="120" Margin="236,18,24,-2" Background="#444" Foreground="LightGray" Click="BTN_ResetReinforcement_Click" Grid.Row="3" Grid.Column="1"/>
             <TextBlock x:Name="TB_Generation" HorizontalAlignment="Right" Text="Generation: 0" FontSize="14" Grid.Row="3" Grid.Column="1" FontWeight="Bold" Foreground="Gray" Margin="40,0,40,10"/>
 
             <!-- Maze Canvas -->

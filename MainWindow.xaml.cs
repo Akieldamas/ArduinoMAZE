@@ -675,5 +675,26 @@ namespace ArduinoMAZE
         {
             Close();
         }
+
+        private void BTN_ResetReinforcement_Click(object sender, RoutedEventArgs e)
+        {
+            alpha = 0.1; // learning rate  
+            discount_factor = 0.9; // gamma  
+
+            epsilon = 0.9;
+            generation = 0;
+
+            reward = -50;
+
+            games_count = 1;
+            max_games = 1000;
+            currentState = new int[6];
+            validActions = new List<int>();
+            QTable = new Dictionary<string, double[]>();
+            visitCounts = new Dictionary<string, int>();
+
+            generation = 1;
+            TB_Generation.Text = $"Generation: {generation}";
+        }
     }
 }
