@@ -13,15 +13,15 @@ namespace ArduinoMAZE.Controller
     public class DAO_API
     {
         HttpClient client;
-        private readonly string loginUsername = "darklion84";
-        private readonly string loginPassword = "N4rT7kA2vL9pQwX3";
+        private readonly string loginUsername = "";
+        private readonly string loginPassword = "";
 
         string authToken = "";
 
         public DAO_API()
         {
             client = new HttpClient();
-            client.BaseAddress = new Uri("https://este.alwaysdata.net");
+            client.BaseAddress = new Uri("");
         }
 
         private async Task loginToAPI()
